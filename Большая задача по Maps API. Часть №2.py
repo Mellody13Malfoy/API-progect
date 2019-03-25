@@ -18,7 +18,7 @@ class Map(object):
             if event.key == pygame.K_PAGEUP and self.z < 19:
                 self.z += 1
             if event.key == pygame.K_PAGEDOWN and self.z > 1:
-                self.z -= 1        
+                self.z -= 1 
 
 def load_map(mapp):
     map_request = "http://static-maps.yandex.ru/1.x/?ll={},{}&z={z}&l={type}".format(mapp.lat, mapp.lon, z=mapp.z, type=mapp.type)
@@ -45,10 +45,10 @@ def main():
         event = pygame.event.wait()
         if event.type == pygame.QUIT:
             break
-            
+        mapp.update(event)    
         map_file = load_map(mapp)
         screen.blit(pygame.image.load(map_file), (0, 0))
-        mapp.update(event)
+        
         pygame.display.flip()
     pygame.quit()
     os.remove(map_file)
