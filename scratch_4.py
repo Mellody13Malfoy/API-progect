@@ -8,7 +8,7 @@ lat_step = 0.008
 lon_step = 0.002
 coords_to_geo_x = 0.0000428
 coords_to_geo_y = 0.0000428
-rectt = (0, 0, 136, 26)
+name = ''
 
 
 class Map(object):
@@ -22,6 +22,7 @@ class Map(object):
         self.use_postal_code = False
 
     def update(self, event):
+        global name
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_PAGEUP and self.z < 19:
                 self.z += 1
@@ -41,13 +42,21 @@ class Map(object):
                 self.type = 'sat'
             if event.key == pygame.K_3:
                 self.type = 'sat%2Cskl'
+            # Удаление метки на backspace
             if pygame.key.get_pressed()[pygame.K_BACKSPACE]:
                 self.pt = ''
+                name = ''
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
                 x, y = self.screen_to_geo(event.pos)
-                flag = True
+                geocoder_request = "http://geocode-maps.yandex.ru/1.x/?geocode=" + str(x) + ', ' + str(
+                    y) + "&format=json"
+                response = requests.get(geocoder_request)
+                json_response = response.json()
+                toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
+                toponym_address = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
+                name = toponym_address
                 self.lat = x
                 self.lon = y
                 self.pt = '&pt={},{},pm2rdm'.format(x, y)
@@ -80,9 +89,11 @@ def load_map(mapp):
 
 
 def main():
+    global name
     pygame.init()
     screen = pygame.display.set_mode((600, 450))
     mapp = Map()
+    font = pygame.font.SysFont('verdana', 15)
     while pygame.event.wait().type != pygame.QUIT:
         event = pygame.event.wait()
         if event.type == pygame.QUIT:
@@ -90,6 +101,10 @@ def main():
         mapp.update(event)
         map_file = load_map(mapp)
         screen.blit(pygame.image.load(map_file), (0, 0))
+        if name != '':
+            string_rendered = font.render(name, 1, (0, 0, 0))
+            intro_rect = string_rendered.get_rect()
+            screen.blit(string_rendered, intro_rect)
         pygame.display.flip()
     pygame.quit()
     os.remove(map_file)
